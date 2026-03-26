@@ -1,0 +1,22 @@
+# Firebase App Hosting Configuration
+# See https://firebase.google.com/docs/app-hosting/configure
+
+# The runtime settings for the app
+runtime:
+  # The Node.js version to use
+  nodeVersion: 20
+
+# Environment variables that will be available during both build and runtime
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyBfwiqlRwe7kIdQA6FLTXX9AEsYg57j7V8"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "aaaaaaaa-37afc.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "aaaaaaaa-37afc"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "aaaaaaaa-37afc.firebasestorage.app"
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "869253726318"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:869253726318:web:a3c19821855ceb2ecee67f"
