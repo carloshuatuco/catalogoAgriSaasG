@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, Package, LogOut, ArrowLeft, Loader2 } from "lucide-react";
+import { Settings, Package, LogOut, ArrowLeft, Loader2, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
@@ -66,12 +66,20 @@ export default function AdminLayout({
       {/* Admin Sidebar */}
       <aside className="w-64 bg-[#0b3d32] text-white flex-col justify-between hidden md:flex shrink-0 shadow-lg relative z-20">
         <div>
-          <div className="p-6 border-b border-[#13594a]">
-            <h1 className="text-xl font-bold tracking-wider relative group cursor-default">MAGISTRAL
+          <div className="p-6 border-b border-[#13594a] flex flex-col items-center text-center">
+             {store?.logo ? (
+                <img src={store.logo} alt="Logo de Tienda" className="w-16 h-16 object-contain bg-white rounded-xl shadow-sm mb-3 p-1" />
+             ) : (
+                <div className="w-16 h-16 rounded-xl bg-[#13594a] flex items-center justify-center mb-3">
+                   <span className="text-2xl font-bold text-white uppercase">{store?.name?.substring(0,2) || 'TI'}</span>
+                </div>
+             )}
+            <h1 className="text-xl font-bold tracking-wider relative group cursor-default leading-tight">
+               {store?.name || 'Mi Tienda'}
                <span title="Conectado a Firebase" className="absolute -top-1 -right-2 bg-green-500 w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
             </h1>
-            <p className="text-[10px] text-green-300 uppercase tracking-widest mt-1 font-medium truncate">
-               {store?.name || user.email || 'Admin'}
+            <p className="text-[10px] text-green-300 uppercase tracking-widest mt-1.5 font-medium truncate w-full">
+               Plataforma Magistral
             </p>
           </div>
           
@@ -79,6 +87,10 @@ export default function AdminLayout({
             <Link href="/admin" className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${pathname === '/admin' ? 'bg-[#13594a] shadow-md text-white border-l-2 border-green-400' : 'text-gray-300 hover:bg-[#13594a]/50 hover:text-white'}`}>
               <Package className="w-5 h-5" />
               Productos
+            </Link>
+            <Link href="/admin/marketing" className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${pathname === '/admin/marketing' ? 'bg-[#13594a] shadow-md text-white border-l-2 border-green-400' : 'text-gray-300 hover:bg-[#13594a]/50 hover:text-white'}`}>
+              <Megaphone className="w-5 h-5" />
+              Marketing
             </Link>
             <Link href="/admin/configuracion" className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${pathname === '/admin/configuracion' ? 'bg-[#13594a] shadow-md text-white border-l-2 border-green-400' : 'text-gray-300 hover:bg-[#13594a]/50 hover:text-white'}`}>
               <Settings className="w-5 h-5" />
@@ -88,6 +100,10 @@ export default function AdminLayout({
         </div>
 
         <div className="p-4 space-y-2 mb-4 border-t border-[#13594a] pt-4">
+           <div className="mb-3 px-2">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Administrador</p>
+              <p className="text-xs text-green-300 truncate" title={user.email || ""}>{user.email || ""}</p>
+           </div>
            {/* Firebase Logout */}
            <button 
              onClick={handleLogout}
