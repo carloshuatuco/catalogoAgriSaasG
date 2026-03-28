@@ -113,6 +113,10 @@ export default function DomainCatalogPage({ params }: { params: Promise<{ hostna
          setStore(s);
       }
       setStoreLoading(false);
+    }).catch(err => {
+      console.error("Error cargando dominio:", err);
+      setStoreLoading(false);
+      notFound();
     });
   }, [resolvedParams.hostname]);
 

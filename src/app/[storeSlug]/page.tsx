@@ -143,6 +143,10 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
          }
       }
       setStoreLoading(false);
+    }).catch(err => {
+      console.error("Error cargando la tienda:", err);
+      setStoreLoading(false);
+      notFound();
     });
   }, [resolvedParams.storeSlug]);
 
