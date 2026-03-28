@@ -16,12 +16,17 @@ export const config = {
 
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
-  let hostname = req.headers.get("host") || "";
+  let hostname = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
 
   // En local, limpiamos el puerto
   hostname = hostname.replace(/:\d+$/, "");
 
-  // Dominios que consideramos "nuestros" y no necesitan rewrite de dominio personalizado
+  // Si termina en .a.run.app (Cloud Run inner URL en Firebase App Hosting), NO es custom domain
+  if (hostname.endsWith(".a.run.app")) {
+     return NextResponse.next();
+  }
+
+  // Dominios que consideramos "nuestros" (Landing page o main domain)
   const currentHost = process.env.NODE_ENV === "production" ? "catalogo.magistral.pe" : "localhost";
   const coreDomains = [
     "localhost", 

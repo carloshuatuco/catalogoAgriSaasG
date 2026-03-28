@@ -105,18 +105,20 @@ export default function DomainCatalogPage({ params }: { params: Promise<{ hostna
     window.open(url, "_blank");
   };
 
+  const [storeNotFound, setStoreNotFound] = useState(false);
+
   useEffect(() => {
     getStoreByDomain(resolvedParams.hostname).then(s => {
       if (!s) {
-         notFound();
+         setStoreNotFound(true);
       } else {
          setStore(s);
       }
       setStoreLoading(false);
     }).catch(err => {
       console.error("Error cargando dominio:", err);
+      setStoreNotFound(true);
       setStoreLoading(false);
-      notFound();
     });
   }, [resolvedParams.hostname]);
 
@@ -134,6 +136,15 @@ export default function DomainCatalogPage({ params }: { params: Promise<{ hostna
 
   if (storeLoading) {
      return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 animate-spin text-[#156d5e]" /></div>;
+  }
+
+  if (storeNotFound) {
+     return (
+       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 text-center">
+         <h2 className="text-2xl font-bold text-gray-800 mb-2">Página no disponible</h2>
+         <p className="text-gray-500 max-w-md">Este dominio no tiene ninguna tienda asignada actualmente o la tienda ha sido deshabilitada.</p>
+       </div>
+     );
   }
 
   if (!store) return null;

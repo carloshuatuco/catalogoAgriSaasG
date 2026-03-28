@@ -128,13 +128,14 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
     window.open(url, "_blank");
   };
 
+  const [storeNotFound, setStoreNotFound] = useState(false);
+
   useEffect(() => {
     getStoreBySlug(resolvedParams.storeSlug).then(s => {
       if (!s) {
-         notFound();
+         setStoreNotFound(true);
       } else {
          setStore(s);
-         // Mostrar popup si hay banners
          if (s.banners && s.banners.length > 0) {
            const hasSeen = sessionStorage.getItem(`promo_${s.id}`);
            if (!hasSeen) {
@@ -145,8 +146,8 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
       setStoreLoading(false);
     }).catch(err => {
       console.error("Error cargando la tienda:", err);
+      setStoreNotFound(true);
       setStoreLoading(false);
-      notFound();
     });
   }, [resolvedParams.storeSlug]);
 
@@ -173,6 +174,16 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
 
   if (storeLoading) {
      return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 animate-spin text-[#156d5e]" /></div>;
+  }
+
+  if (storeNotFound) {
+     return (
+       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 text-center">
+         <h2 className="text-2xl font-bold text-gray-800 mb-2">Catálogo no encontrado</h2>
+         <p className="text-gray-500 max-w-md">No pudimos encontrar la tienda que buscas o actualmente no está disponible.</p>
+         <a href="/" className="mt-6 bg-[#156d5e] text-white px-6 py-2.5 rounded-xl font-bold transition hover:bg-[#0b3d32] shadow-sm">Ir a la página principal</a>
+       </div>
+     );
   }
 
   if (!store) return null;
