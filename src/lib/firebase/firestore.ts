@@ -50,8 +50,6 @@ export interface Store {
   banners?: string[]; // Usado para popups promocionales
   locationMapUrl?: string;
   coupons?: Coupon[];
-  customDomain?: string;
-  domainStatus?: 'none' | 'pending' | 'active' | 'failed';
 }
 
 export interface ProductVariant {
@@ -91,15 +89,6 @@ export const getStoreBySlug = async (slug: string): Promise<Store | null> => {
   return null;
 };
 
-export const getStoreByDomain = async (domain: string): Promise<Store | null> => {
-  const q = query(collection(db, "stores"), where("customDomain", "==", domain));
-  const querySnapshot = await getDocs(q);
-  if (!querySnapshot.empty) {
-    const docSnap = querySnapshot.docs[0];
-    return { id: docSnap.id, ...docSnap.data() } as Store;
-  }
-  return null;
-};
 export const createStore = async (ownerId: string, slug: string, name: string) => {
   const exists = await getStoreBySlug(slug);
   if (exists) throw new Error("El nombre de la URL ya está en uso. Por favor, elige otro.");

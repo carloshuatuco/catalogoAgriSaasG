@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { db } from "@/lib/firebase/firestore";
 import { doc, updateDoc } from "firebase/firestore";
-import { Loader2, Save, UploadCloud, X, QrCode, Ticket, Plus, Globe, Copy } from "lucide-react";
+import { Loader2, Save, UploadCloud, X, QrCode, Ticket, Plus, Copy } from "lucide-react";
 import { storage, uploadImage } from "@/lib/firebase/storage";
 import { Coupon } from "@/lib/firebase/firestore";
 import { QRCodeCanvas } from 'qrcode.react';
@@ -37,9 +37,7 @@ export default function ConfigPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [newCoupon, setNewCoupon] = useState<Partial<Coupon>>({ code: '', discountType: 'percentage', discountValue: 0, active: true });
 
-  // Dominios
-  const [customDomain, setCustomDomain] = useState("");
-  const [domainStatus, setDomainStatus] = useState<'none' | 'pending' | 'active' | 'failed'>('none');
+
 
   const handleAddCoupon = () => {
      if (!newCoupon.code || !newCoupon.discountValue) {
@@ -111,8 +109,7 @@ export default function ConfigPage() {
       });
       if (store.banners) setBanners(store.banners);
       if (store.coupons) setCoupons(store.coupons);
-      if (store.customDomain) setCustomDomain(store.customDomain);
-      if (store.domainStatus) setDomainStatus(store.domainStatus);
+
     }
   }, [store]);
 
@@ -175,32 +172,6 @@ export default function ConfigPage() {
     setBanners(prev => prev.filter(b => b !== url));
   };
 
-  const handleRequestDomain = async () => {
-    if (!customDomain.trim() || !store) return;
-    setDomainStatus('pending');
-    try {
-      const storeRef = doc(db, "stores", store.id);
-      await updateDoc(storeRef, {
-        customDomain: customDomain.trim(),
-        domainStatus: 'pending'
-      });
-
-      const res = await fetch('/api/domains', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: customDomain.trim() })
-      });
-      const data = await res.json();
-      if (!data.success) {
-         alert("Hubo un error automatizando el dominio en Firebase: " + data.message + "\nSin embargo, se guardó el dominio en base de datos. Completa la configuración de DNS manualmente.");
-      } else {
-         alert("¡Dominio solicitado con éxito! La propagación puede tardar hasta 24 hrs.");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error guardando el dominio.");
-    }
-  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,9 +193,7 @@ export default function ConfigPage() {
         businessHours,
         deliveryMethods,
         banners,
-        coupons,
-        customDomain,
-        domainStatus
+        coupons
       });
       alert("Configuración guardada correctamente");
     } catch (error) {
@@ -308,48 +277,7 @@ export default function ConfigPage() {
               </div>
            </section>
           
-          {/* Dominio Personalizado */}
-          <section className="bg-gray-50 border border-gray-200 p-6 rounded-2xl md:col-span-2">
-             <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-               <Globe className="w-5 h-5 text-[#156d5e]" /> Dominio Personalizado Pro
-             </h3>
-             <p className="text-sm text-gray-600 mb-4">Usa tu propio dominio (ej. <b>www.mitienda.com</b>). Ingresa tu dominio y vincúlalo a tu tienda.</p>
-             
-             <div className="flex gap-2 mb-4">
-                <input 
-                  type="text" 
-                  value={customDomain} 
-                  onChange={e => setCustomDomain(e.target.value.toLowerCase())} 
-                  placeholder="ej. www.mitienda.com" 
-                  className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#156d5e]"
-                />
-                <button 
-                  type="button"
-                  onClick={handleRequestDomain}
-                  className="bg-[#156d5e] hover:bg-[#0b3d32] text-white font-bold px-6 py-2 rounded-lg text-sm transition shadow-sm"
-                >
-                  {domainStatus === 'pending' ? 'Actualizar' : 'Vincular Dominio'}
-                </button>
-             </div>
 
-             {domainStatus === 'pending' && (
-               <div className="bg-yellow-50 text-yellow-800 p-4 rounded-xl border border-yellow-200 text-xs shadow-sm">
-                 <p className="font-bold mb-2">⏳ Pendiente de Verificación DNS</p>
-                 <p className="mb-2">Por favor, ve al proveedor donde compraste tu dominio y añade los siguientes <b>Registros A</b> apuntando a nuestra plataforma:</p>
-                 <div className="bg-white p-3 mt-2 font-mono text-center rounded-lg border border-yellow-300">
-                    <p className="text-gray-500 mb-1">Host (Nombre): <b>@</b> y <b>www</b></p>
-                    <p className="font-black text-gray-900 text-base">199.36.158.100</p>
-                 </div>
-                 <p className="mt-3 text-gray-600">Una vez configurado, puede tardar hasta 24 horas en propagarse en internet.</p>
-               </div>
-             )}
-             {domainStatus === 'active' && (
-               <div className="bg-green-50 text-green-800 p-4 rounded-xl border border-green-200 text-sm shadow-sm flex items-center gap-3">
-                 <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse shrink-0"></span>
-                 <span>Tu tienda ya está conectada a la web a través de <b>{customDomain}</b> y operando normalmente.</span>
-               </div>
-             )}
-          </section>
 
           {/* QR Integrations */}
           <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col md:flex-row items-center gap-6">
