@@ -61,18 +61,18 @@ export default async function StoreLayout({
         className="sticky top-0 z-50 shadow-[0_4px_20px_rgb(0,0,0,0.08)] border-b border-white/10 backdrop-blur-md transition-colors"
         style={{ backgroundColor: store.themeColor ? `${store.themeColor}F2` : 'rgba(11, 61, 50, 0.95)' }} // Color dinámico con 95% opacidad
       >
-        <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div className="font-extrabold text-2xl tracking-tight flex items-center gap-3 text-white">
+        <div className="container mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between">
+          <div className="font-extrabold text-lg sm:text-2xl tracking-tight flex items-center gap-2 sm:gap-3 text-white min-w-0">
              {store.logo ? (
-               <div className="h-10 w-10 flex items-center justify-center bg-white rounded-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] p-1 border border-gray-100">
+               <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 flex items-center justify-center bg-white rounded-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] p-1 border border-gray-100">
                  <img src={store.logo} alt={store.name} className="max-h-full max-w-full object-contain drop-shadow-sm" />
                </div>
              ) : (
-              <div className="h-10 w-10 flex items-center justify-center bg-white/10 rounded-xl backdrop-blur-sm border border-white/20">
-                <span className="text-xl">🏪</span>
+              <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 flex items-center justify-center bg-white/10 rounded-xl backdrop-blur-sm border border-white/20">
+                <span className="text-base sm:text-xl">🏪</span>
               </div>
             )}
-            <span className="drop-shadow-md hidden sm:inline-block">{store.name}</span>
+            <span className="drop-shadow-md truncate">{store.name}</span>
           </div>
         </div>
       </header>

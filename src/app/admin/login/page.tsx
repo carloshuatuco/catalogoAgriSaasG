@@ -28,10 +28,19 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col px-4 text-sans">
       <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-xl border border-gray-100 text-center">
         <div className="mb-6 flex flex-col items-center">
-          <div className="w-16 h-16 bg-[#0b3d32] rounded-full flex items-center justify-center text-white text-3xl mb-4 shadow-sm">
-            🌲
+          <div className="flex flex-col items-center justify-center gap-4 mb-6 mt-16 md:mt-0">
+            <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/studio-899372303-46a10.firebasestorage.app/o/MAGISTRAl_GREEN_IMAGOTIPO.webp?alt=media&token=ebe6756a-ebbe-4b7e-ae61-476408bc6033"
+                alt="Logo Magistral"
+                /* drop-shadow es mejor para logos transparentes porque el brillo sigue la forma del escudo, no un cuadrado */
+                className="h-20 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.8)]"
+              />
+            </div>
+            <h1 className="text-6xl md:text-[2.5rem] font-bold tracking-tighter leading-tight text-green">
+              Magistral
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">MAGISTRAL</h1>
           <p className="text-[11px] font-bold uppercase text-[#156d5e] mt-1 tracking-wider">Acceso Administrativo</p>
         </div>
 
@@ -43,7 +52,7 @@ export default function LoginPage() {
           className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed group"
         >
           {loading ? (
-             <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+            <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
           ) : (
             <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

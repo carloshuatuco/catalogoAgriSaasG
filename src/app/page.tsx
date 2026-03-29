@@ -6,20 +6,22 @@ export default function HomeSaaS() {
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans selection:bg-[#156d5e] selection:text-white w-full">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center justify-center flex-shrink-0">
             <img
               src="https://firebasestorage.googleapis.com/v0/b/studio-899372303-46a10.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=ad47cd24-3f33-47a8-a46d-f9b5931ffbed"
               alt="Logo Magistral"
-              className="h-18 w-auto object-contain"
+              className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.8)] transition-all"
             />
           </div>
-          <nav className="flex items-center gap-4">
-            <Link href="/admin/login" className="text-sm font-bold text-gray-600 hover:text-[#156d5e] transition-colors">
+
+          <nav className="flex items-center gap-2 sm:gap-4">
+            <Link href="/admin/login" className="text-xs sm:text-sm font-bold text-gray-600 hover:text-[#156d5e] transition-colors whitespace-nowrap">
               Iniciar Sesión
             </Link>
-            <Link href="/admin/login" className="text-sm font-bold bg-[#156d5e] text-white px-5 py-2.5 rounded-full shadow-md hover:bg-[#0b3d32] hover:shadow-lg transition-all hidden sm:block">
-              Crear mi catálogo
+            <Link href="/admin/login" className="text-xs sm:text-sm font-bold bg-[#156d5e] text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-md hover:bg-[#0b3d32] hover:shadow-lg transition-all whitespace-nowrap">
+              <span className="hidden sm:inline">Crear mi catálogo</span>
+              <span className="sm:hidden">Empezar</span>
             </Link>
           </nav>
         </div>
@@ -108,16 +110,16 @@ export default function HomeSaaS() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12 text-center">
+      <footer className="bg-gray-900 text-gray-400 py-10 sm:py-12 text-center">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 mb-6">
             <img
               src="https://firebasestorage.googleapis.com/v0/b/studio-899372303-46a10.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=ad47cd24-3f33-47a8-a46d-f9b5931ffbed"
               alt="Logo Magistral"
-              className="h-18 w-auto object-contain"
+              className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.8)] transition-all"
             />
           </div>
-          <p className="text-sm mb-2 font-medium">&copy; {new Date().getFullYear()} Plataforma Magistral. Todos los derechos reservados.</p>
+          <p className="text-xs sm:text-sm mb-2 font-medium">&copy; {new Date().getFullYear()} Plataforma Magistral. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>
