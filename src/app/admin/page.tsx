@@ -1,11 +1,12 @@
 "use client";
 
-import { Plus, Edit2, Trash2, List, Loader2, X, UploadCloud, Check, Award, Tag } from "lucide-react";
+import { Plus, Edit2, Trash2, List, Loader2, X, UploadCloud, Check, Award, Tag, Sheet } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db, getProductsRef } from "@/lib/firebase/firestore";
 import { storage, uploadImage } from "@/lib/firebase/storage";
 import { onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import BulkUploadModal from "@/components/admin/BulkUploadModal";
 
 export interface ProductVariant {
   name: string;
@@ -45,6 +46,8 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkSuccessMsg, setBulkSuccessMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
   // Form State
@@ -152,15 +155,32 @@ export default function AdminProductsPage() {
 
   return (
     <div className="max-w-7xl mx-auto h-full flex flex-col relative">
+      {/* Bulk success toast */}
+      {bulkSuccessMsg && (
+        <div className="fixed top-5 right-5 z-[100] bg-green-600 text-white text-sm font-bold px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 animate-fade-in">
+          <Check className="w-4 h-4" />
+          {bulkSuccessMsg}
+          <button onClick={() => setBulkSuccessMsg(null)} className="ml-3 opacity-70 hover:opacity-100"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 border-l-4 border-[#156d5e] pl-3">Panel de Productos</h2>
           <p className="text-sm text-gray-500 mt-1 pl-4">Catálogo de insumos agrícolas para <b>{store.name}</b>.</p>
         </div>
-        <button onClick={() => openModal()} className="bg-[#156d5e] hover:bg-[#0b3d32] text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
-          <Plus className="w-4 h-4" /> Añadir Producto
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => setIsBulkModalOpen(true)}
+            className="bg-white hover:bg-gray-50 text-[#156d5e] border border-[#156d5e]/30 px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap"
+          >
+            <Sheet className="w-4 h-4" /> Carga Masiva CSV
+          </button>
+          <button onClick={() => openModal()} className="bg-[#156d5e] hover:bg-[#0b3d32] text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
+            <Plus className="w-4 h-4" /> Añadir Producto
+          </button>
+        </div>
       </div>
 
       <div className="mb-4 flex items-center gap-2">
@@ -341,6 +361,18 @@ export default function AdminProductsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Bulk Upload Modal */}
+      {isBulkModalOpen && (
+        <BulkUploadModal
+          onClose={() => setIsBulkModalOpen(false)}
+          onSuccess={(count) => {
+            setIsBulkModalOpen(false);
+            setBulkSuccessMsg(`✓ ${count} productos subidos exitosamente al catálogo.`);
+            setTimeout(() => setBulkSuccessMsg(null), 6000);
+          }}
+        />
       )}
     </div>
   );
