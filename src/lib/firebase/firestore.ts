@@ -50,6 +50,7 @@ export interface Store {
   banners?: string[]; // Usado para popups promocionales
   locationMapUrl?: string;
   coupons?: Coupon[];
+  priorityCategories?: string[]; // Hasta 3 categorías que aparecen primero en el catálogo
 }
 
 export interface ProductVariant {

@@ -1,25 +1,13 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef, useMemo } from "react";
 import { Search, Info, ShoppingCart, Loader2, Star, X, Tag, MapPin, ChevronLeft, ChevronRight, Award } from "lucide-react";
 import { db, getProductsRef, getStoreBySlug, Store, Coupon, Product } from "@/lib/firebase/firestore";
 import { onSnapshot } from "firebase/firestore";
 import { notFound } from "next/navigation";
 
-// Mismas categorías
-const DEFAULT_CATEGORIES = [
-  "Todos",
-  "ADYUVANTES",
-  "ADHERENTES",
-  "ACONDICIONADOR DE AGUA",
-  "BIOESTIMULANTES",
-  "COADYUVANTES",
-  "FUNGICIDAS",
-  "HERBICIDAS",
-  "INSECTICIDAS",
-  "FERTILIZANTES FOLIARES",
-  "REGULADORES DE CRECIMIENTO"
-];
+
+const DEFAULT_PRIORITY_CATEGORIES = ['FOLIARES', 'HERBICIDAS', 'FUNGICIDAS'];
 
 // Borramos la interfaz local de Product porque ya está en firestore.ts
 
@@ -32,6 +20,8 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [storeLoading, setStoreLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(20);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<string>("");
@@ -170,7 +160,73 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
     return () => unsub();
   }, [store]);
 
-  const categoriesList = store?.categories?.length ? ["Todos", ...store.categories] : DEFAULT_CATEGORIES;
+  const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
+  const categoriesList = ["Todos", ...uniqueCategories];
+
+  // Reset visible count cuando cambia el filtro o búsqueda
+  useEffect(() => { setVisibleCount(20); }, [activeCategory, searchTerm]);
+
+  // Infinite scroll con IntersectionObserver
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount(prev => prev + 20);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [sentinelRef.current]);
+
+  // ———————————————————————————————————————
+  // Ordenamiento de productos con jerarquía + aleatorio en prioritarias
+  // Reglas:
+  //   1. Destacado + Oferta (con imagen)
+  //   2. Solo Destacado   (con imagen)
+  //   3. Solo Oferta      (con imagen)
+  //   4. 3 Categorías prioritarias mezcladas al azar (con imagen)
+  //   5. Resto            (con imagen)
+  //   6. TODO producto sin imagen — siempre últimos
+  // ———————————————————————————————————————
+  const filteredProducts = useMemo(() => {
+    const priorities = (store?.priorityCategories && store.priorityCategories.length > 0)
+      ? store.priorityCategories.map(c => c.toUpperCase())
+      : DEFAULT_PRIORITY_CATEGORIES.map(c => c.toUpperCase());
+
+    const base = products.filter(p => {
+      const matchesCategory = activeCategory === "Todos" || p.category === activeCategory;
+      const matchesSearch =
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.description || p.substance || "").toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+
+    const hasImg  = (p: { image: string }) => Boolean(p.image);
+    const isPriority = (p: { category?: string }) => priorities.includes((p.category || '').toUpperCase());
+
+    // Grupos con imagen
+    const featBoth   = base.filter(p =>  hasImg(p) &&  p.featured &&  p.onSale);
+    const featOnly   = base.filter(p =>  hasImg(p) &&  p.featured && !p.onSale);
+    const saleOnly   = base.filter(p =>  hasImg(p) && !p.featured &&  p.onSale);
+    const priority   = base.filter(p =>  hasImg(p) && !p.featured && !p.onSale && isPriority(p));
+    const rest       = base.filter(p =>  hasImg(p) && !p.featured && !p.onSale && !isPriority(p));
+
+    // Sin imagen — TODOS van al final, sin excepción
+    const noImage    = base.filter(p => !hasImg(p));
+
+    // Mezcla aleatoria de las 3 categorías prioritarias
+    const shuffledPriority = [...priority].sort(() => Math.random() - 0.5);
+
+    return [...featBoth, ...featOnly, ...saleOnly, ...shuffledPriority, ...rest, ...noImage];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, activeCategory, searchTerm, store?.priorityCategories]);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
 
   if (storeLoading) {
      return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 animate-spin text-[#156d5e]" /></div>;
@@ -188,19 +244,9 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
 
   if (!store) return null;
 
-  // Filtrar y ordenar productos
-  const filteredProducts = products.filter((product) => {
-    const matchesCategory = activeCategory === "Todos" || product.category === activeCategory;
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (product.description || product.substance || "").toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  }).sort((a, b) => {
-    if (a.featured && !b.featured) return -1;
-    if (!a.featured && b.featured) return 1;
-    return 0;
-  });
 
   const isClosed = store.businessHours ? !store.businessHours.isOpen : false;
+
 
   return (
     <div className="bg-white min-h-screen">
@@ -398,10 +444,11 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
                 <p className="font-medium text-sm">Cargando productos...</p>
              </div>
           ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.04)] border border-gray-100/60 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col group relative overflow-hidden">
-                  
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {visibleProducts.map((product) => (
+                  <div key={product.id} className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.04)] border border-gray-100/60 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col group relative overflow-hidden">
+
                   {/* Badges Flotantes */}
                   <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 items-start">
                      {product.featured && (
@@ -480,7 +527,19 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+              {/* Centinela de Infinite Scroll */}
+              {hasMore && (
+                <div ref={sentinelRef} className="flex justify-center items-center py-10 mt-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#156d5e]/50" />
+                </div>
+              )}
+              {!hasMore && filteredProducts.length > 20 && (
+                <p className="text-center text-xs text-gray-400 font-medium py-8 uppercase tracking-widest">
+                  Has visto todos los productos ({filteredProducts.length})
+                </p>
+              )}
+            </>
           ) : (
             <div className="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-200">
               <p className="text-gray-500 mb-2 font-medium">No se encontraron productos.</p>

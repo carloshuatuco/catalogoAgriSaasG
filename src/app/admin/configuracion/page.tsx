@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import { db } from "@/lib/firebase/firestore";
-import { doc, updateDoc } from "firebase/firestore";
-import { Loader2, Save, UploadCloud, X, QrCode, Ticket, Plus, Copy } from "lucide-react";
-import { storage, uploadImage } from "@/lib/firebase/storage";
+import { db, getProductsRef } from "@/lib/firebase/firestore";
+import { doc, updateDoc, getDocs } from "firebase/firestore";
+import { Loader2, Save, UploadCloud, X, QrCode, Ticket, Plus, Copy, ListOrdered } from "lucide-react";
+import { uploadImage } from "@/lib/firebase/storage";
 import { Coupon } from "@/lib/firebase/firestore";
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -19,6 +19,8 @@ export default function ConfigPage() {
   const [socialLinks, setSocialLinks] = useState({ facebook: "", instagram: "", tiktok: "" });
   const [categories, setCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState("");
+  const [priorityCategories, setPriorityCategories] = useState<string[]>(['', '', '']);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   
   const [businessHours, setBusinessHours] = useState({ isOpen: true, schedule: "", closedMessage: "" });
   const [deliveryMethods, setDeliveryMethods] = useState({ pickup: true, shipping: false, shippingCost: 0, shippingZones: "" });
@@ -109,7 +111,16 @@ export default function ConfigPage() {
       });
       if (store.banners) setBanners(store.banners);
       if (store.coupons) setCoupons(store.coupons);
+      if (store.priorityCategories && store.priorityCategories.length > 0) {
+        const padded = [...store.priorityCategories, '', '', ''].slice(0, 3);
+        setPriorityCategories(padded);
+      }
 
+      // Cargar categorías reales de los productos de esta tienda
+      getDocs(getProductsRef(store.id)).then(snap => {
+        const cats = [...new Set(snap.docs.map(d => d.data().category as string).filter(Boolean))].sort();
+        setAvailableCategories(cats);
+      });
     }
   }, [store]);
 
@@ -193,7 +204,8 @@ export default function ConfigPage() {
         businessHours,
         deliveryMethods,
         banners,
-        coupons
+        coupons,
+        priorityCategories: priorityCategories.filter(c => c !== '')
       });
       alert("Configuración guardada correctamente");
     } catch (error) {
@@ -304,24 +316,36 @@ export default function ConfigPage() {
             </div>
           </section>
           
-          {/* Categories Settings */}
+          {/* Priority Categories */}
           <section>
-            <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Categorías del Catálogo</h3>
-            <div>
-               <label className="block text-[11px] font-bold text-[#156d5e] mb-1.5 uppercase tracking-wider">Tus Categorías</label>
-               <div className="flex gap-2 mb-3">
-                 <input type="text" value={newCategory} onChange={e => setNewCategory(e.target.value)} onKeyDown={e => { if(e.key==='Enter'){ e.preventDefault(); if(newCategory.trim() && !categories.includes(newCategory.trim())) { setCategories([...categories, newCategory.trim()]); setNewCategory(''); } } }} className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#156d5e]" placeholder="Nueva categoría (Presiona Enter)" />
-                 <button type="button" onClick={() => { if(newCategory.trim() && !categories.includes(newCategory.trim())) { setCategories([...categories, newCategory.trim()]); setNewCategory(''); } }} className="bg-[#156d5e] hover:bg-[#0b3d32] text-white px-4 py-2 rounded-lg text-sm font-bold transition">Agregar</button>
-               </div>
-               <div className="flex flex-wrap gap-2">
-                 {categories.map((cat, i) => (
-                   <span key={i} className="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm border border-gray-200">
-                     {cat}
-                     <button type="button" onClick={() => setCategories(categories.filter(c => c !== cat))} className="text-red-500 hover:text-red-700 font-bold text-base leading-none">×</button>
-                   </span>
-                 ))}
-                 {categories.length === 0 && <span className="text-xs text-gray-400">Sin categorías personalizadas (se usarán las por defecto).</span>}
-               </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-1 border-b pb-2 flex items-center gap-2">
+              <ListOrdered className="w-5 h-5 text-[#156d5e]" /> Orden de Categorías Prioritarias
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">Elige hasta 3 categorías que aparecerán primero en tu catálogo, justo después de los productos destacados y en oferta. Si no configuras ninguna, se usarán por defecto: Foliares → Herbicidas → Fungicidas.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i}>
+                  <label className="block text-[11px] font-bold text-[#156d5e] mb-1.5 uppercase tracking-wider">
+                    {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} {i + 1}ª Prioridad
+                  </label>
+                  <select
+                    value={priorityCategories[i] || ''}
+                    onChange={e => {
+                      const updated = [...priorityCategories];
+                      updated[i] = e.target.value;
+                      setPriorityCategories(updated);
+                    }}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#156d5e] transition-all"
+                  >
+                    <option value="">(Ninguna / Por defecto)</option>
+                    {availableCategories
+                      .filter(cat => !priorityCategories.includes(cat) || priorityCategories[i] === cat)
+                      .map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                  </select>
+                </div>
+              ))}
             </div>
           </section>
 
