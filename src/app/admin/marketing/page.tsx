@@ -1,16 +1,54 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { db, Coupon } from "@/lib/firebase/firestore";
 import { doc, updateDoc } from "firebase/firestore";
-import { Loader2, QrCode, Ticket, Plus, Edit2, Trash2, X, Download, Copy, Check } from "lucide-react";
+import { Loader2, QrCode, Ticket, Plus, Edit2, Trash2, X, Download, Copy, Check, ImageDown } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
+
+// Convierte una URL de imagen a base64 (para evitar problemas CORS con html2canvas)
+async function imageUrlToBase64(url: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    // Añadir cache-buster para evitar versiones de caché sin headers CORS
+    const cleanUrl = url.includes('?') ? `${url}&cb=${Date.now()}` : `${url}?cb=${Date.now()}`;
+    
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = cleanUrl;
+    
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      try {
+        resolve(canvas.toDataURL("image/png"));
+      } catch (e) {
+        console.error("Error generating data URL:", e);
+        resolve(null);
+      }
+    };
+    
+    img.onerror = (err) => {
+      console.error("Error loading image for base64 conversion:", err);
+      resolve(null);
+    };
+  });
+}
 
 export default function MarketingPage() {
   const { store } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [downloadingCard, setDownloadingCard] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [isConvertingLogo, setIsConvertingLogo] = useState(false);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,20 +66,59 @@ export default function MarketingPage() {
     expiresAt: ""
   });
 
-  const qrRef = useRef<HTMLCanvasElement>(null);
+  const qrCardRef = useRef<HTMLDivElement>(null);
   
-  // Si está en localhost usa localhost, sino usa origin
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const publicStoreUrl = store ? `${baseUrl}/${store.slug}` : "";
+  // URL limpia para mostrar en la tarjeta (sin https://)
+  const displayUrl = publicStoreUrl.replace(/^https?:\/\//, "");
 
-  const handleDownloadQR = () => {
-    if (!qrRef.current) return;
-    const canvas = qrRef.current;
-    const url = canvas.toDataURL("image/png");
-    const link = document.createElement('a');
-    link.download = `codigo-qr-${store?.slug || 'tienda'}.png`;
-    link.href = url;
-    link.click();
+  const themeColor = store?.themeColor || "#0b3d32";
+
+  // Convierte el logo a base64 cuando se carga el store
+  useEffect(() => {
+    if (!store?.logo) { 
+      setLogoDataUrl(null); 
+      setIsConvertingLogo(false);
+      return; 
+    }
+    
+    setIsConvertingLogo(true);
+    imageUrlToBase64(store.logo)
+      .then((res) => {
+        setLogoDataUrl(res);
+      })
+      .catch(() => {
+        setLogoDataUrl(null);
+      })
+      .finally(() => {
+        setIsConvertingLogo(false);
+      });
+  }, [store?.logo]);
+
+  const handleDownloadCard = async () => {
+    if (!qrCardRef.current) return;
+    setDownloadingCard(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(qrCardRef.current, {
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        scale: 3, // alta resolución
+        logging: false,
+      });
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `qr-catalogo-${store?.slug || "tienda"}.png`;
+      link.href = url;
+      link.click();
+    } catch (err) {
+      console.error("Error al generar la tarjeta:", err);
+      alert("No se pudo generar la tarjeta. Intenta de nuevo.");
+    } finally {
+      setDownloadingCard(false);
+    }
   };
 
   const handleCopyLink = () => {
@@ -92,7 +169,6 @@ export default function MarketingPage() {
       const newCoupon = {
         ...formData,
         code: formData.code.toUpperCase().trim(),
-        // Limpiar undefined si están vacíos
         usesLimit: formData.usesLimit ? Number(formData.usesLimit) : undefined,
         expiresAt: formData.expiresAt || undefined
       };
@@ -100,7 +176,6 @@ export default function MarketingPage() {
       if (editingIndex !== null) {
         updatedCoupons[editingIndex] = newCoupon;
       } else {
-        // Verificar duplicados
         if (updatedCoupons.some(c => c.code === newCoupon.code)) {
            alert("Ya existe un cupón con este código.");
            setLoading(false);
@@ -113,7 +188,6 @@ export default function MarketingPage() {
         coupons: updatedCoupons
       });
 
-      // Update store state manually for immediate feedback (though useAuthStore snapshot config should handle this, let's keep it safe)
       store.coupons = updatedCoupons;
       closeModal();
     } catch(err) {
@@ -163,29 +237,87 @@ export default function MarketingPage() {
              </div>
              
              <div className="p-6 flex flex-col items-center text-center">
-                <p className="text-xs text-gray-500 mb-6 font-medium">Imprime este código y pégalo en tu tienda física o tarjetas de presentación.</p>
+                <p className="text-xs text-gray-500 mb-5 font-medium">
+                  Vista previa de tu tarjeta QR. Descárgala e imprímela para compartir tu catálogo.
+                </p>
                 
-                <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100 mb-6">
-                   <QRCodeCanvas 
-                     id="qrCode" 
-                     value={publicStoreUrl}
-                     size={200}
-                     bgColor={"#ffffff"}
-                     fgColor={"#0b3d32"}
-                     level={"H"}
-                     includeMargin={false}
-                     ref={qrRef}
-                   />
-                </div>
+                {/* ── TARJETA QR VISUAL (se captura con html2canvas) ── */}
+                <div
+                  ref={qrCardRef}
+                  style={{ backgroundColor: themeColor }}
+                  className="w-full rounded-3xl p-7 flex flex-col items-center gap-5 shadow-xl"
+                >
+                  {/* Logo o Iniciales */}
+                  {store?.logo ? (
+                    <div className="bg-white rounded-2xl p-3 shadow-md w-20 h-20 flex items-center justify-center relative overflow-hidden">
+                      {/* Si tenemos el base64 lo usamos para asegurar la descarga, si no, usamos la URL original para la vista previa */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={logoDataUrl || store.logo}
+                        alt="Logo"
+                        className="w-full h-full object-contain"
+                      />
+                      
+                      {/* Spinner sutil solo si se está convirtiendo y aún no tenemos el base64 */}
+                      {isConvertingLogo && !logoDataUrl && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: themeColor }} />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    // Solo mostrar iniciales si de verdad NO hay logo configurado
+                    <div className="bg-white rounded-2xl w-20 h-20 flex items-center justify-center shadow-md">
+                      <span className="text-3xl font-black" style={{ color: themeColor }}>
+                        {store?.name?.substring(0, 2).toUpperCase() || "??"}
+                      </span>
+                    </div>
+                  )}
 
-                <div className="w-full space-y-3">
+                  {/* Nombre de la empresa */}
+                  <p className="text-white font-black text-lg tracking-wide text-center leading-tight drop-shadow">
+                    {store.name}
+                  </p>
+
+                  {/* QR sobre tarjeta blanca */}
+                  <div className="bg-white rounded-2xl p-5 shadow-lg">
+                    <QRCodeCanvas
+                      value={publicStoreUrl}
+                      size={180}
+                      bgColor="#ffffff"
+                      fgColor={themeColor}
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </div>
+
+                  {/* Pie de página */}
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-white/70 text-[11px] font-semibold uppercase tracking-widest">
+                      Catálogo digital
+                    </p>
+                    <p className="text-white font-bold text-[13px] tracking-wide">
+                      {displayUrl}
+                    </p>
+                  </div>
+                </div>
+                {/* ── FIN TARJETA ── */}
+
+                <div className="w-full space-y-3 mt-5">
+                   {/* Botón descargar tarjeta completa */}
                    <button 
-                     onClick={handleDownloadQR} 
-                     className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm"
+                     onClick={handleDownloadCard}
+                     disabled={downloadingCard}
+                     className="w-full flex items-center justify-center gap-2 font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md text-white disabled:opacity-60"
+                     style={{ backgroundColor: themeColor }}
                    >
-                     <Download className="w-4 h-4" /> Descargar PNG
+                     {downloadingCard
+                       ? <><Loader2 className="w-4 h-4 animate-spin" /> Generando...</>
+                       : <><ImageDown className="w-4 h-4" /> Descargar tarjeta QR</>
+                     }
                    </button>
 
+                   {/* Copiar enlace */}
                    <div className="flex bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-inner">
                       <input type="text" readOnly value={publicStoreUrl} className="flex-1 bg-transparent text-xs text-gray-600 font-medium px-3 py-2 outline-none" />
                       <button onClick={handleCopyLink} className="bg-gray-200 hover:bg-gray-300 px-3 flex items-center justify-center transition-colors text-gray-700" title="Copiar Enlace">
@@ -282,7 +414,7 @@ export default function MarketingPage() {
                <div className="grid grid-cols-2 gap-3">
                   <div>
                      <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Tipo</label>
-                     <select value={formData.discountType} onChange={e => setFormData({...formData, discountType: e.target.value as any})} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-rose-500">
+                     <select value={formData.discountType} onChange={e => setFormData({...formData, discountType: e.target.value as "percentage" | "fixed"})} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-rose-500">
                         <option value="percentage">Porcentaje (%)</option>
                         <option value="fixed">Monto Fijo (S/)</option>
                      </select>

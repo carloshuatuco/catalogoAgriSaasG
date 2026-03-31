@@ -9,7 +9,7 @@ export default function HomeSaaS() {
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-3">
           <div className="flex items-center justify-center flex-shrink-0">
             <img
-              src="https://firebasestorage.googleapis.com/v0/b/studio-899372303-46a10.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=ad47cd24-3f33-47a8-a46d-f9b5931ffbed"
+              src="https://firebasestorage.googleapis.com/v0/b/magistralc.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=a345fc2b-fc8e-4324-8c5d-db9965a473ba"
               alt="Logo Magistral"
               className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.8)] transition-all"
             />
@@ -114,7 +114,7 @@ export default function HomeSaaS() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 mb-6">
             <img
-              src="https://firebasestorage.googleapis.com/v0/b/studio-899372303-46a10.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=ad47cd24-3f33-47a8-a46d-f9b5931ffbed"
+              src="https://firebasestorage.googleapis.com/v0/b/magistralc.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=a345fc2b-fc8e-4324-8c5d-db9965a473ba"
               alt="Logo Magistral"
               className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.8)] transition-all"
             />

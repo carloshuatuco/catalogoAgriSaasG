@@ -27,22 +27,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col px-4 text-sans">
       <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-xl border border-gray-100 text-center">
-        <div className="mb-6 flex flex-col items-center">
-          <div className="flex flex-col items-center justify-center gap-4 mb-6 mt-16 md:mt-0">
+          <div className="flex flex-col items-center justify-center mt-12 md:mt-2">
             <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/studio-899372303-46a10.firebasestorage.app/o/MAGISTRAl_GREEN_IMAGOTIPO.webp?alt=media&token=ebe6756a-ebbe-4b7e-ae61-476408bc6033"
+                src="https://firebasestorage.googleapis.com/v0/b/magistralc.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=a345fc2b-fc8e-4324-8c5d-db9965a473ba"
                 alt="Logo Magistral"
-                /* drop-shadow es mejor para logos transparentes porque el brillo sigue la forma del escudo, no un cuadrado */
-                className="h-20 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.8)]"
+                className="h-28 md:h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]"
               />
             </div>
-            <h1 className="text-6xl md:text-[2.5rem] font-bold tracking-tighter leading-tight text-green">
-              Magistral
-            </h1>
+            <p className="text-[11px] font-black uppercase text-[#156d5e] mt-6 mb-10 tracking-[0.2em] opacity-80">
+              Acceso Administrativo
+            </p>
           </div>
-          <p className="text-[11px] font-bold uppercase text-[#156d5e] mt-1 tracking-wider">Acceso Administrativo</p>
-        </div>
 
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-medium mb-4">{error}</div>}
 
