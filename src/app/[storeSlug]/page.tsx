@@ -104,15 +104,7 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
       }
     }
 
-    if (store?.deliveryMethods && (store.deliveryMethods.pickup || store.deliveryMethods.shipping)) {
-      msg += `\n\n*Métodos de Entrega Disponibles:*`;
-      if (store.deliveryMethods.pickup) msg += `\n🛍️ Retiro en Local`;
-      if (store.deliveryMethods.shipping) {
-        msg += `\n🚚 Envío a Domicilio`;
-        if (store.deliveryMethods.shippingCost) msg += ` (Costo Aprox: S/ ${store.deliveryMethods.shippingCost})`;
-      }
-      msg += `\n\nPor favor indícame tu método de preferencia.`;
-    }
+
 
     const url = `https://wa.me/${store.whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");

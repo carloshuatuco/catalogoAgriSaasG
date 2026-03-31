@@ -1,7 +1,7 @@
 "use client";
 
-import { Plus, Edit2, Trash2, List, Loader2, X, UploadCloud, Check, Award, Tag, Sheet } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Plus, Edit2, Trash2, List, Loader2, X, UploadCloud, Check, Award, Tag, Sheet, Search } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { db, getProductsRef } from "@/lib/firebase/firestore";
 import { storage, uploadImage } from "@/lib/firebase/storage";
 import { onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
@@ -44,6 +44,9 @@ export default function AdminProductsPage() {
   const { store } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibleCount, setVisibleCount] = useState(20);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -76,6 +79,45 @@ export default function AdminProductsPage() {
     });
     return () => unsub();
   }, [store]);
+
+  // Filtering and alphabetical sorting
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter(p => {
+        const search = searchTerm.toLowerCase();
+        return (
+          p.name.toLowerCase().includes(search) ||
+          (p.category || "").toLowerCase().includes(search) ||
+          (p.description || "").toLowerCase().includes(search) ||
+          (p.substance || "").toLowerCase().includes(search)
+        );
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [products, searchTerm]);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
+
+  // Infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount(prev => prev + 20);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [sentinelRef.current]);
+
+  // Reset visible count on search
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchTerm]);
 
   const openModal = (product?: Product) => {
     if (product) {
@@ -183,9 +225,25 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      <div className="mb-4 flex items-center gap-2">
-         <List className="w-5 h-5 text-[#156d5e]" />
-         <h3 className="font-semibold text-gray-800">Listado de Productos de tu Tienda {loading && <Loader2 className="inline w-4 h-4 animate-spin ml-2 text-green-600"/>}</h3>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+           <List className="w-5 h-5 text-[#156d5e]" />
+           <h3 className="font-semibold text-gray-800 text-sm md:text-base">Listado de Productos de tu Tienda {loading && <Loader2 className="inline w-4 h-4 animate-spin ml-2 text-green-600"/>}</h3>
+        </div>
+
+        {/* Search Bar Admin */}
+        <div className="relative w-full md:w-80">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, categoría..."
+            className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#156d5e] focus:border-transparent transition-all shadow-sm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
       
       {/* Table Container */}
@@ -202,7 +260,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-gray-600 text-xs">
-              {products.map((product) => (
+              {visibleProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4 flex justify-center">
                     {product.image ? (
@@ -250,6 +308,18 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
+      
+      {/* Infinite Scroll Sentinel */}
+      {hasMore && (
+        <div ref={sentinelRef} className="flex justify-center items-center py-8">
+           <Loader2 className="w-6 h-6 animate-spin text-[#156d5e]/50" />
+        </div>
+      )}
+      {!hasMore && filteredProducts.length > 0 && products.length > 20 && (
+        <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest py-8">
+          Has llegado al final de la lista ({filteredProducts.length} productos)
+        </p>
+      )}
 
       {/* Modal Form */}
       {isModalOpen && (
