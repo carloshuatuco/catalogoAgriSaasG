@@ -7,48 +7,12 @@ import { doc, updateDoc } from "firebase/firestore";
 import { Loader2, QrCode, Ticket, Plus, Edit2, Trash2, X, Download, Copy, Check, ImageDown } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
-// Convierte una URL de imagen a base64 (para evitar problemas CORS con html2canvas)
-async function imageUrlToBase64(url: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    // Añadir cache-buster para evitar versiones de caché sin headers CORS
-    const cleanUrl = url.includes('?') ? `${url}&cb=${Date.now()}` : `${url}?cb=${Date.now()}`;
-    
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = cleanUrl;
-    
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        resolve(null);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      try {
-        resolve(canvas.toDataURL("image/png"));
-      } catch (e) {
-        console.error("Error generating data URL:", e);
-        resolve(null);
-      }
-    };
-    
-    img.onerror = (err) => {
-      console.error("Error loading image for base64 conversion:", err);
-      resolve(null);
-    };
-  });
-}
 
 export default function MarketingPage() {
   const { store } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [downloadingCard, setDownloadingCard] = useState(false);
-  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
-  const [isConvertingLogo, setIsConvertingLogo] = useState(false);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,42 +39,127 @@ export default function MarketingPage() {
 
   const themeColor = store?.themeColor || "#0b3d32";
 
-  // Convierte el logo a base64 cuando se carga el store
-  useEffect(() => {
-    if (!store?.logo) { 
-      setLogoDataUrl(null); 
-      setIsConvertingLogo(false);
-      return; 
-    }
-    
-    setIsConvertingLogo(true);
-    imageUrlToBase64(store.logo)
-      .then((res) => {
-        setLogoDataUrl(res);
-      })
-      .catch(() => {
-        setLogoDataUrl(null);
-      })
-      .finally(() => {
-        setIsConvertingLogo(false);
-      });
-  }, [store?.logo]);
+  // Helper: draw rounded rect path
+  function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // Helper: try to draw an image, returns false if it fails (CORS etc.)
+  async function tryDrawImage(ctx: CanvasRenderingContext2D, src: string, x: number, y: number, w: number, h: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          ctx.drawImage(img, x, y, w, h);
+          resolve(true);
+        } catch {
+          resolve(false);
+        }
+      };
+      img.onerror = () => resolve(false);
+      // cache-buster to avoid stale cached response without CORS headers
+      img.src = src.includes('?') ? `${src}&_cb=${Date.now()}` : `${src}?_cb=${Date.now()}`;
+    });
+  }
 
   const handleDownloadCard = async () => {
-    if (!qrCardRef.current) return;
+    if (!store) return;
     setDownloadingCard(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(qrCardRef.current, {
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: null,
-        scale: 3, // alta resolución
-        logging: false,
-      });
+      const qrCanvasEl = qrCardRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
+
+      const SCALE = 3;
+      const W = 320 * SCALE;
+      const LOGO_SIZE = 80 * SCALE;
+      const QR_BOX = 210 * SCALE;
+      const QR_SIZE = 180 * SCALE;
+      const PADDING = 28 * SCALE;
+      const GAP = 20 * SCALE;
+      const TEXT_NAME_H = 28 * SCALE;
+      const FOOTER_H = 36 * SCALE;
+      const H = PADDING + LOGO_SIZE + GAP + TEXT_NAME_H + GAP + QR_BOX + GAP + FOOTER_H + PADDING;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d")!;
+
+      // Background
+      ctx.fillStyle = themeColor;
+      roundRect(ctx, 0, 0, W, H, 36 * SCALE);
+      ctx.fill();
+
+      let y = PADDING;
+
+      // Logo Box
+      const logoX = (W - LOGO_SIZE) / 2;
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(0,0,0,0.18)";
+      ctx.shadowBlur = 12 * SCALE;
+      roundRect(ctx, logoX, y, LOGO_SIZE, LOGO_SIZE, 16 * SCALE);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      const logoLoaded = store.logo
+        ? await tryDrawImage(ctx, store.logo, logoX + 8 * SCALE, y + 8 * SCALE, LOGO_SIZE - 16 * SCALE, LOGO_SIZE - 16 * SCALE)
+        : false;
+      if (!logoLoaded) {
+        const initials = (store.name || "??").substring(0, 2).toUpperCase();
+        ctx.fillStyle = themeColor;
+        ctx.font = `900 ${32 * SCALE}px system-ui,sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(initials, logoX + LOGO_SIZE / 2, y + LOGO_SIZE / 2);
+      }
+      y += LOGO_SIZE + GAP;
+
+      // Store Name
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `900 ${16 * SCALE}px system-ui,sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(store.name || "", W / 2, y + TEXT_NAME_H / 2);
+      y += TEXT_NAME_H + GAP;
+
+      // QR White Box
+      const qrBoxX = (W - QR_BOX) / 2;
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(0,0,0,0.15)";
+      ctx.shadowBlur = 16 * SCALE;
+      roundRect(ctx, qrBoxX, y, QR_BOX, QR_BOX, 18 * SCALE);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      const qrPad = (QR_BOX - QR_SIZE) / 2;
+      if (qrCanvasEl) {
+        ctx.drawImage(qrCanvasEl, qrBoxX + qrPad, y + qrPad, QR_SIZE, QR_SIZE);
+      }
+      y += QR_BOX + GAP;
+
+      // Footer
+      ctx.fillStyle = "rgba(255,255,255,0.60)";
+      ctx.font = `700 ${9 * SCALE}px system-ui,sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("CAT\u00c1LOGO DIGITAL", W / 2, y + FOOTER_H * 0.28);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `800 ${11 * SCALE}px system-ui,sans-serif`;
+      ctx.fillText(displayUrl, W / 2, y + FOOTER_H * 0.72);
+
       const url = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = `qr-catalogo-${store?.slug || "tienda"}.png`;
+      link.download = `qr-catalogo-${store.slug || "tienda"}.png`;
       link.href = url;
       link.click();
     } catch (err) {
@@ -249,24 +298,15 @@ export default function MarketingPage() {
                 >
                   {/* Logo o Iniciales */}
                   {store?.logo ? (
-                    <div className="bg-white rounded-2xl p-3 shadow-md w-20 h-20 flex items-center justify-center relative overflow-hidden">
-                      {/* Si tenemos el base64 lo usamos para asegurar la descarga, si no, usamos la URL original para la vista previa */}
+                    <div className="bg-white rounded-2xl p-3 shadow-md w-20 h-20 flex items-center justify-center overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={logoDataUrl || store.logo}
+                        src={store.logo}
                         alt="Logo"
                         className="w-full h-full object-contain"
                       />
-                      
-                      {/* Spinner sutil solo si se está convirtiendo y aún no tenemos el base64 */}
-                      {isConvertingLogo && !logoDataUrl && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-                          <Loader2 className="w-5 h-5 animate-spin" style={{ color: themeColor }} />
-                        </div>
-                      )}
                     </div>
                   ) : (
-                    // Solo mostrar iniciales si de verdad NO hay logo configurado
                     <div className="bg-white rounded-2xl w-20 h-20 flex items-center justify-center shadow-md">
                       <span className="text-3xl font-black" style={{ color: themeColor }}>
                         {store?.name?.substring(0, 2).toUpperCase() || "??"}

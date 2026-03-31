@@ -104,7 +104,7 @@ export default function AdminProductsPage() {
     if (!sentinel) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        if (entries[0].isIntersecting && hasMore) {
           setVisibleCount(prev => prev + 20);
         }
       },
@@ -112,7 +112,7 @@ export default function AdminProductsPage() {
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [sentinelRef.current]);
+  });
 
   // Reset visible count on search
   useEffect(() => {
@@ -247,8 +247,8 @@ export default function AdminProductsPage() {
       </div>
       
       {/* Table Container */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex-1 flex flex-col">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 flex flex-col">
+        <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full text-left text-sm whitespace-nowrap md:whitespace-normal">
             <thead className="text-[11px] text-gray-500 font-bold uppercase tracking-wider bg-gray-50 border-b border-gray-100">
               <tr>
@@ -308,18 +308,18 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
-      
-      {/* Infinite Scroll Sentinel */}
-      {hasMore && (
-        <div ref={sentinelRef} className="flex justify-center items-center py-8">
-           <Loader2 className="w-6 h-6 animate-spin text-[#156d5e]/50" />
-        </div>
-      )}
-      {!hasMore && filteredProducts.length > 0 && products.length > 20 && (
-        <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest py-8">
-          Has llegado al final de la lista ({filteredProducts.length} productos)
-        </p>
-      )}
+
+      {/* Infinite Scroll Sentinel — always in DOM so observer can detect it */}
+      <div ref={sentinelRef} className="py-4 flex justify-center items-center">
+        {hasMore && (
+          <Loader2 className="w-6 h-6 animate-spin text-[#156d5e]/50" />
+        )}
+        {!hasMore && filteredProducts.length > 0 && products.length > 20 && (
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+            Fin de la lista &mdash; {filteredProducts.length} productos
+          </p>
+        )}
+      </div>
 
       {/* Modal Form */}
       {isModalOpen && (
