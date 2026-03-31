@@ -308,9 +308,108 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-12 flex flex-col lg:flex-row gap-10">
-        {/* Sidebar Filters */}
-        <aside className="w-full lg:w-72 flex-shrink-0 space-y-8">
+      {/* Info de Tienda en MÓVIL */}
+      {(store.businessHours || store.deliveryMethods || store.locationMapUrl) && (
+        <div className="lg:hidden px-4 pt-6">
+          <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-900/5">
+            <h3 className="font-bold text-gray-900 text-[14px] mb-4 flex items-center gap-2">
+              <span className="bg-[#156d5e]/10 p-2 rounded-xl text-[#156d5e]"><Info className="w-4 h-4" /></span>
+              Información
+            </h3>
+            <div className="space-y-4">
+              {store.businessHours && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Horarios de Atención</p>
+                  <div className="flex items-start gap-3 bg-gray-50/50 p-3.5 rounded-2xl border border-gray-100/80">
+                    {store.businessHours.isOpen ? (
+                      <div className="w-2.5 h-2.5 mt-1 rounded-full bg-green-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                    ) : (
+                      <div className="w-2.5 h-2.5 mt-1 rounded-full bg-red-400 shrink-0"></div>
+                    )}
+                    <div>
+                      <p className={`text-sm font-extrabold ${store.businessHours.isOpen ? 'text-green-700' : 'text-red-500'}`}>
+                        {store.businessHours.isOpen ? 'Abierto Ahora' : 'Cerrado'}
+                      </p>
+                      {store.businessHours.schedule && <p className="text-[13px] text-gray-500 mt-0.5 leading-relaxed font-medium">{store.businessHours.schedule}</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {store.deliveryMethods && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Opciones de Entrega</p>
+                  <div className="flex flex-col gap-2.5">
+                    {store.deliveryMethods.pickup && (
+                      <div className="flex items-center gap-3 text-sm text-gray-700 bg-gray-50/50 px-4 py-3 rounded-2xl border border-gray-100/80">
+                        <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100/50">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <span className="font-bold text-gray-800">Retiro en local</span>
+                      </div>
+                    )}
+                    {store.deliveryMethods.shipping && (
+                      <div className="flex flex-col gap-2 text-sm text-[#156d5e] bg-[#156d5e]/[0.03] px-4 py-3.5 rounded-2xl border border-[#156d5e]/10">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-white p-2 rounded-lg shadow-sm border border-[#156d5e]/5 text-[#156d5e]">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                          </div>
+                          <span className="font-bold">Envío a domicilio</span>
+                        </div>
+                        {(store.deliveryMethods.shippingCost || store.deliveryMethods.shippingZones) && (
+                          <div className="pl-11 pr-2 pb-0.5">
+                            {store.deliveryMethods.shippingCost && <p className="text-[11px] font-black tracking-wide text-gray-900 bg-white/60 inline-block px-2.5 py-1 rounded-md mb-1">Desde S/ {store.deliveryMethods.shippingCost}</p>}
+                            {store.deliveryMethods.shippingZones && <p className="text-[#156d5e]/80 text-[12px] leading-relaxed font-medium">{store.deliveryMethods.shippingZones}</p>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {store.locationMapUrl && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Ubicación Geográfica</p>
+                  <div className="rounded-2xl overflow-hidden h-36 border border-gray-100 relative bg-gray-50/50">
+                    <iframe
+                      src={store.locationMapUrl}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      className="absolute inset-0"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtros de categoría en MÓVIL — horizontal scrollable chips */}
+      <div className="lg:hidden px-4 pt-4 pb-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+          {categoriesList.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-bold transition-all border ${
+                activeCategory === cat
+                  ? 'text-white border-transparent shadow-md shadow-[#156d5e]/30'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-[#156d5e]/40 hover:text-[#156d5e]'
+              }`}
+              style={activeCategory === cat ? { backgroundColor: store.themeColor || '#156d5e' } : {}}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-10">
+        {/* Sidebar Filters — solo visible en desktop */}
+        <aside className="hidden lg:block w-full lg:w-72 flex-shrink-0 space-y-8">
           {/* Info Tienda */}
           {(store.businessHours || store.deliveryMethods || store.locationMapUrl) && (
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-900/5">
@@ -645,37 +744,33 @@ export default function StoreCatalogPage({ params }: { params: Promise<{ storeSl
 
     {/* Promo Banner Popup */}
     {showPromo && store.banners && store.banners.length > 0 && (
-      <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-md transition-all animate-in fade-in duration-300">
-         <div className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+      <div 
+        className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3 sm:p-6 backdrop-blur-sm animate-in fade-in duration-300"
+        onClick={() => {
+          setShowPromo(false);
+          sessionStorage.setItem(`promo_${store.id}`, 'true');
+        }}
+      >
+         <div 
+           className="relative w-full animate-in zoom-in-95 duration-300"
+           style={{ maxWidth: '480px' }}
+           onClick={(e) => e.stopPropagation()}
+         >
             <button 
               onClick={() => {
                 setShowPromo(false);
                 sessionStorage.setItem(`promo_${store.id}`, 'true');
               }} 
-              className="absolute top-4 right-4 z-10 bg-white/50 hover:bg-white text-gray-900 p-2 rounded-full transition shadow-lg border border-white/50"
+              className="absolute -top-3 -right-3 z-20 bg-white text-gray-900 p-2 rounded-full transition shadow-xl border-2 border-gray-100 hover:scale-110"
             >
               <X className="w-5 h-5"/>
             </button>
-            <div className="aspect-[4/5] md:aspect-video w-full">
-               <img 
-                 src={store.banners[0]} 
-                 alt="Promoción Especial" 
-                 className="w-full h-full object-cover" 
-               />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex flex-col justify-end p-8">
-                  <h2 className="text-white text-3xl font-bold mb-2">¡Nueva Promoción!</h2>
-                  <p className="text-white/80">Aprovecha nuestras ofertas especiales disponibles por tiempo limitado.</p>
-                  <button 
-                    onClick={() => {
-                      setShowPromo(false);
-                      sessionStorage.setItem(`promo_${store.id}`, 'true');
-                    }}
-                    className="mt-6 bg-white text-gray-900 font-bold py-3 px-8 rounded-xl hover:bg-gray-100 transition shadow-lg w-fit"
-                  >
-                    Ver Catálogo
-                  </button>
-               </div>
-            </div>
+            <img 
+              src={store.banners[0]} 
+              alt="Promoción Especial" 
+              className="w-full h-auto rounded-3xl shadow-2xl block"
+              style={{ maxHeight: '90vh', objectFit: 'contain' }}
+            />
          </div>
       </div>
     )}
