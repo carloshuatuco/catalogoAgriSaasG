@@ -86,7 +86,6 @@ export default function AdminLayout({
            )}
           <h1 className="text-xl font-bold tracking-wider relative group cursor-default leading-tight">
              {store?.name || 'Mi Tienda'}
-             <span title="Conectado a Firebase" className="absolute -top-1 -right-2 bg-green-500 w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
           </h1>
           <p className="text-[10px] text-green-300 uppercase tracking-widest mt-1.5 font-medium truncate w-full">
              Plataforma Magistral

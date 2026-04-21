@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { loginWithGoogle } from "@/lib/firebase/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,18 +28,22 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col px-4 text-sans">
       <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-xl border border-gray-100 text-center">
-          <div className="flex flex-col items-center justify-center mt-12 md:mt-2">
-            <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
-              <img
-                src="https://firebasestorage.googleapis.com/v0/b/magistralc.firebasestorage.app/o/MAGISTRAL_GREEN_LOGOTIPO.webp?alt=media&token=a345fc2b-fc8e-4324-8c5d-db9965a473ba"
-                alt="Logo Magistral"
-                className="h-28 md:h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]"
+        <div className="flex flex-col items-center justify-center mt-12 md:mt-2">
+          <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-20 h-20  mx-auto flex items-center justify-center mb-4 overflow-hidden ">
+              <Image
+                src="/MAGISTRAl_GREEN_IMAGOTIPO.webp"
+                alt="Magistral Logo"
+                width={80}
+                height={80}
+                className="w-full h-full object-cover"
               />
             </div>
-            <p className="text-[11px] font-black uppercase text-[#156d5e] mt-6 mb-10 tracking-[0.2em] opacity-80">
-              Acceso Administrativo
-            </p>
           </div>
+          <p className="text-[11px] font-black uppercase text-[#156d5e] mt-6 mb-10 tracking-[0.2em] opacity-80">
+            Acceso Administrativo
+          </p>
+        </div>
 
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-medium mb-4">{error}</div>}
 

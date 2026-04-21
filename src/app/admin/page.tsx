@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Edit2, Trash2, List, Loader2, X, UploadCloud, Check, Award, Tag, Sheet, Search } from "lucide-react";
+import toast from "react-hot-toast";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { db, getProductsRef } from "@/lib/firebase/firestore";
 import { storage, uploadImage } from "@/lib/firebase/storage";
@@ -179,7 +180,7 @@ export default function AdminProductsPage() {
       closeModal();
     } catch (error) {
        console.error("Error saving product:", error);
-       alert("Error al guardar el producto");
+       toast.error("Error al guardar el producto");
     } finally {
       setSaving(false);
     }

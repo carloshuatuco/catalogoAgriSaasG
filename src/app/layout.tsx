@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Catálogo unificado de insumos agrícolas",
 };
 
+import { Toaster } from "react-hot-toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,6 +20,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.className} min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900`}>
         {children}
+        <Toaster position="bottom-center" />
       </body>
     </html>
   );

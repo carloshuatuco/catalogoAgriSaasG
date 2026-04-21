@@ -9,34 +9,30 @@ export const db = initializeFirestore(app, {
 // -----------------
 // STORES (TENANTS)
 // -----------------
-export interface Coupon {
-  id: string;
-  code: string;
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  active: boolean;
-  usesLimit?: number;      // Límite de usos totales (opcional)
-  currentUses?: number;    // Conteo actual de cuántas veces se ha usado
-  expiresAt?: string;      // Fecha de expiración en formato ISO string
-}
-
 export interface Store {
-  id: string; 
-  slug: string;
+  id: string;
   name: string;
   ownerId: string;
-  themeColor?: string;
+  createdAt: any;
+  updatedAt: any;
+  slug?: string;
+  logo?: string;
+  banner?: string;
+  carouselImages?: string[];
+  locationMapUrl?: string; // Nuevo campo para mapa
+  themeColor?: string; // Para personalizar botones etc
+  whatsappNumber?: string;
+  whatsappMessage?: string; // Mensaje por defecto "Hola me interesa [Producto]"
   socialLinks?: {
     facebook?: string;
     instagram?: string;
     tiktok?: string;
   };
-  whatsappNumber?: string;
-  whatsappMessage?: string;
   categories?: string[];
+  priorityCategories?: string[]; // Categorías destacadas para la zona superior
   businessHours?: {
-    isOpen: boolean;
-    schedule?: string;
+    isOpen: boolean; // Si está recibiendo pedidos
+    schedule: string;
     closedMessage?: string;
   };
   deliveryMethods?: {
@@ -45,12 +41,7 @@ export interface Store {
     shippingCost?: number;
     shippingZones?: string;
   };
-  logo?: string;
-  carouselImages?: string[];
-  banners?: string[]; // Usado para popups promocionales
-  locationMapUrl?: string;
-  coupons?: Coupon[];
-  priorityCategories?: string[]; // Hasta 3 categorías que aparecen primero en el catálogo
+  banners?: string[]; // Banners promocionales tipo popup (ofertas vigentes)
 }
 
 export interface ProductVariant {
