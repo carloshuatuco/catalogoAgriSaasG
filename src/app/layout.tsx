@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 import { Toaster } from "react-hot-toast";
+import { LicenseGuard } from "@/components/LicenseGuard";
 
 export default function RootLayout({
   children,
@@ -19,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${inter.className} min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900`}>
-        {children}
+        <LicenseGuard>
+          {children}
+        </LicenseGuard>
         <Toaster position="bottom-center" />
       </body>
     </html>
