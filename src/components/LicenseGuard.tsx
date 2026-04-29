@@ -16,7 +16,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // Rutas públicas o de auth que no requieren bloqueo
-  const isPublicRoute = ["/", "/login", "/acceso"].includes(pathname);
+  const isPublicRoute = ["/", "/login", "/acceso", "/admin/login"].includes(pathname);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -46,6 +46,12 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, [pathname, isPublicRoute]);
 
+  useEffect(() => {
+    if (!isUserLoading && !isVerifying && !isPublicRoute && !user) {
+      router.replace("/login");
+    }
+  }, [isUserLoading, isVerifying, isPublicRoute, user, router]);
+
   if (isUserLoading || isVerifying) {
     if (isPublicRoute) return <>{children}</>;
     return (
@@ -61,7 +67,6 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    router.replace("/login");
     return null;
   }
 

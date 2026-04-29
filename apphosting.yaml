@@ -9,17 +9,17 @@ runtime:
 # Environment variables that will be available during both build and runtime
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: "AIzaSyBfwiqlRwe7kIdQA6FLTXX9AEsYg57j7V8"
+    value: "AIzaSyA-iDx6InefQ85clj3xN_ULGE7uvwMEY08"
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: "aaaaaaaa-37afc.firebaseapp.com"
+    value: "botica-magistral.firebaseapp.com"
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: "aaaaaaaa-37afc"
+    value: "botica-magistral"
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "aaaaaaaa-37afc.firebasestorage.app"
+    value: "botica-magistral.firebasestorage.app"
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: "869253726318"
+    value: "535341103547"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: "1:869253726318:web:a3c19821855ceb2ecee67f"
+    value: "1:535341103547:web:9aa3c8edc8798a7d4aac9e"
   # Licencias — magistral-afiliados (Divi magistral)
   - variable: NEXT_PUBLIC_LICENCIAS_API_KEY
     value: "AIzaSyDsP6Yc-iF8SM1XeBSXL-dEXoT6uMBrihQ"

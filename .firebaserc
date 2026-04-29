@@ -1,7 +1,6 @@
 {
   "projects": {
-    "magistrala": "aaaaaaaa-37afc",
-    "default": "aaaaaaaa-37afc"
+    "default": "botica-magistral"
   },
   "targets": {},
   "etags": {}

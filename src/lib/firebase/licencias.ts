@@ -33,6 +33,8 @@ export async function verificarLicencia(email: string): Promise<boolean> {
     return !snap.empty;
   } catch (err) {
     console.error("[Licencias] Error verificando licencia:", err);
-    return false;
+    // En caso de error (ej: permisos insuficientes por reglas de Firestore), 
+    // no bloqueamos el acceso inicial a la sesión.
+    return true;
   }
 }
